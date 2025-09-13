@@ -1,16 +1,16 @@
 import { Stream } from "stream";
 import { TelegramBasicBot } from "./TelegramBasicBot";
-import { CommonTelegramBotOptions } from "../models";
 import { LoggerEx, LogLevel } from "../logger";
 import { escapeString } from "../utils";
 import { ILogger, ILoggerEx } from "../interfaces";
+import { TelegramLogBotOptions } from "../models/TelegramLogBotOptions";
 
-export class TelegramLogBot extends TelegramBasicBot<CommonTelegramBotOptions> {
+export class TelegramLogBot extends TelegramBasicBot<TelegramLogBotOptions> {
   private pendingAction: Promise<void> = Promise.resolve();
 
   public constructor(
     logger: ILogger,
-    options: CommonTelegramBotOptions,
+    options: TelegramLogBotOptions,
     printChatInfo: boolean = false
   ) {
     super(logger, options, printChatInfo);

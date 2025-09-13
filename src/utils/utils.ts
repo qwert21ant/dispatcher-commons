@@ -16,6 +16,13 @@ export function formatDate(date: Date): string {
   return res;
 }
 
+export function formatTime(date: Date): string {
+  let res = "";
+  res += date.getHours().toString().padStart(2, '0') + ":";
+  res += date.getMinutes().toString().padStart(2, '0');
+  return res;
+}
+
 export function escapeString(str: any): string {
   if (isNull(str))
     return "$null";

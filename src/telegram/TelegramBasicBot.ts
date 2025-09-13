@@ -1,14 +1,7 @@
 import TelegramBot, { Message, InlineKeyboardButton } from "node-telegram-bot-api";
 import { Stream } from "node:stream";
-import { CommonTelegramBotOptions } from "../models";
+import { BotCommands, BotKeyboardButton, BotKeyboardData, BotKeyboardHandlers, CommonTelegramBotOptions } from "../models";
 import { ILogger } from "../interfaces";
-
-export type BotCommands = Record<string, {
-  description: string;
-  usage: string;
-  example?: string;
-  handler: (msg: Message) => Promise<boolean>;
-}>;
 
 export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
   protected bot: TelegramBot;
@@ -57,7 +50,7 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
     const botUsername = botInfo.username;
 
     this.bot.on("message", async (msg) => {
-      if (!this.options.chatIds.includes(msg.chat.id)) return;
+      if (!await this.acceptMessage(msg)) return;
 
       try {
         if (!await this.onMessage(msg)) return;
@@ -94,6 +87,26 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
     });
   }
 
+  protected async registerKeyboardHandlers(handlers: BotKeyboardHandlers): Promise<void> {
+    this.bot.on("callback_query", async (cb) => {
+      const data = JSON.parse(cb.data) as BotKeyboardData;
+
+      if (handlers[data.op]) {
+        try {
+          await handlers[data.op](cb.from.id, cb.message.message_id, data.data);
+        } catch (e) {
+          this.logger.error(e);
+        }
+      } else {
+        this.logger.error(`Unknown cb operation: ${data.op}`);
+      }
+    });
+  }
+
+  protected async acceptMessage(msg: Message): Promise<boolean> {
+    return false;
+  }
+
   protected async onMessage(msg: Message): Promise<boolean> {
     return true;
   }
@@ -105,8 +118,12 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
     });
   }
 
-  protected async sendOrEdit(chatId: number, text: string, msgId?: number, keyboard?: InlineKeyboardButton[][]): Promise<void> {
-    const replyMarkup = keyboard ? { inline_keyboard: keyboard } : undefined;
+  protected async delete(msgId: number, chatId: number): Promise<void> {
+    await this.bot.deleteMessage(chatId, msgId);
+  }
+
+  protected async sendOrEdit(chatId: number, text: string, msgId?: number, keyboard?: BotKeyboardButton[][]): Promise<void> {
+    const replyMarkup = keyboard ? { inline_keyboard: mapKeyboard(keyboard) } : undefined;
     if (msgId)
       await this.bot.editMessageText(text, {
         chat_id: chatId,
@@ -142,4 +159,24 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
       contentType: mimeType,
     });
   }
+
+  protected createBKBtn(op: string, text: string, data?: any): BotKeyboardButton {
+    return {
+      text,
+      payload: {
+        op,
+        data,
+      },
+    };
+  }
+}
+
+function mapKeyboard(keyboard?: BotKeyboardButton[][]): InlineKeyboardButton[][] | undefined {
+  if (!keyboard)
+    return undefined;
+
+  return keyboard.map(line => line.map(btn => ({
+    text: btn.text,
+    callback_data: JSON.stringify(btn.payload),
+  })));
 }
