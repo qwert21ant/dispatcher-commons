@@ -1,13 +1,14 @@
 {
   "name": "@dispatcher/commons",
   "private": true,
-  "version": "0.1",
+  "version": "0.1.0",
   "main": "dist/index",
   "types": "dist/index",
   "files": [
     "dist"
   ],
   "scripts": {
+    "prepublishOnly": "npm run build",
     "build": "tsc --build"
   },
   "devDependencies": {
