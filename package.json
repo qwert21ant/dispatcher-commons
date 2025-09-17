@@ -1,5 +1,5 @@
 {
-  "name": "dispatcher-commons",
+  "name": "@dispatcher/commons",
   "private": true,
   "version": "0.1",
   "main": "dist/index",
