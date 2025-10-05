@@ -1,7 +1,7 @@
 import TelegramBot, { Message, InlineKeyboardButton } from "node-telegram-bot-api";
 import { Stream } from "node:stream";
 import { BotCommands, BotKeyboardButton, BotKeyboardData, BotKeyboardHandlers, CommonTelegramBotOptions } from "../models";
-import { ILogger } from "../interfaces";
+import { ILogger } from "../logger";
 
 export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
   protected bot: TelegramBot;

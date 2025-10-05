@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { ReasonableError } from "../utils";
 import { LogLevel } from "./LogLevel";
-import { ILogger } from "../interfaces";
+import { ILogger } from "./ILogger";
 
 export class Logger implements ILogger {
   constructor(

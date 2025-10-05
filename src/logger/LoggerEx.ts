@@ -1,7 +1,7 @@
 import { Logger } from "./Logger";
 import { Stream } from "node:stream";
 import { LogLevel } from "./LogLevel";
-import { ILoggerEx } from "../interfaces";
+import { ILoggerEx } from "./ILoggerEx";
 
 export class LoggerEx extends Logger implements ILoggerEx {
   constructor(

@@ -1,8 +1,7 @@
 import { Stream } from "stream";
 import { TelegramBasicBot } from "./TelegramBasicBot";
-import { LoggerEx, LogLevel } from "../logger";
+import { ILogger, ILoggerEx, LoggerEx, LogLevel } from "../logger";
 import { escapeString } from "../utils";
-import { ILogger, ILoggerEx } from "../interfaces";
 import { TelegramLogBotOptions } from "../models/TelegramLogBotOptions";
 
 export class TelegramLogBot extends TelegramBasicBot<TelegramLogBotOptions> {

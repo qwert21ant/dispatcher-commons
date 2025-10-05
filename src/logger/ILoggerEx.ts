@@ -1,6 +1,6 @@
 import { Stream } from "node:stream";
 import { ILogger } from "./ILogger";
-import { LogLevel } from "../logger";
+import { LogLevel } from "./LogLevel";
 
 export interface ILoggerEx extends ILogger {
   with(opts: { level?: LogLevel, scope?: string }): ILoggerEx;

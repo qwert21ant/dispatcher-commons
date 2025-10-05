@@ -2,7 +2,7 @@ import { isNull, isUndefined } from "lodash";
 import { ReasonableError } from "./ReasonableError";
 import { ParallelRepeater, RepeaterAction } from "./Repeater";
 import Stream from "node:stream";
-import { ILogger } from "../interfaces";
+import { ILogger } from "../logger";
 
 export function sleep(millis: number): Promise<void> {
   return new Promise(res => setTimeout(res, millis));
