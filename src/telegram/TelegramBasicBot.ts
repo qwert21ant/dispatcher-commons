@@ -2,26 +2,18 @@ import TelegramBot, { Message, InlineKeyboardButton } from "node-telegram-bot-ap
 import { Stream } from "node:stream";
 import { BotCommands, BotKeyboardButton, BotKeyboardData, BotKeyboardHandlers, CommonTelegramBotOptions } from "../models";
 import { ILogger } from "../logger";
-import { RateLimiter, RateLimiterOptions } from "../utils";
+import { RateLimiter } from "../utils";
 
 export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
   protected bot: TelegramBot;
-  private rateLimiter: RateLimiter;
 
   public constructor(
     protected logger: ILogger,
+    protected rateLimiter: RateLimiter,
     protected options: Options,
     printChatInfo: boolean = false,
   ) {
     this.bot = new TelegramBot(options.apiToken, { polling: false });
-
-    // Initialize rate limiter with options or defaults
-    const rateLimitOptions: RateLimiterOptions = {
-      delay: options.rateLimit?.delay ?? 300,
-      maxQueueSize: options.rateLimit?.maxQueueSize ?? 10,
-      logInterval: options.rateLimit?.logInterval ?? 5,
-    };
-    this.rateLimiter = new RateLimiter(logger, rateLimitOptions);
 
     if (printChatInfo) {
       this.bot.on("message", (msg) => {

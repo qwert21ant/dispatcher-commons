@@ -1,7 +1,7 @@
 import { Stream } from "stream";
 import { TelegramBasicBot } from "./TelegramBasicBot";
 import { ILogger, ILoggerEx, LoggerEx, LogLevel } from "../logger";
-import { escapeString } from "../utils";
+import { escapeString, RateLimiter } from "../utils";
 import { TelegramLogBotOptions } from "../models/TelegramLogBotOptions";
 
 export class TelegramLogBot extends TelegramBasicBot<TelegramLogBotOptions> {
@@ -10,9 +10,10 @@ export class TelegramLogBot extends TelegramBasicBot<TelegramLogBotOptions> {
   public constructor(
     logger: ILogger,
     options: TelegramLogBotOptions,
+    rateLimiter: RateLimiter,
     printChatInfo: boolean = false
   ) {
-    super(logger, options, printChatInfo);
+    super(logger, rateLimiter, options, printChatInfo);
   }
 
   protected async onStarted(): Promise<void> {
