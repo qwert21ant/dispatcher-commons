@@ -2,9 +2,11 @@ import TelegramBot, { Message, InlineKeyboardButton } from "node-telegram-bot-ap
 import { Stream } from "node:stream";
 import { BotCommands, BotKeyboardButton, BotKeyboardData, BotKeyboardHandlers, CommonTelegramBotOptions } from "../models";
 import { ILogger } from "../logger";
+import { RateLimiter, RateLimiterOptions } from "../utils";
 
 export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
   protected bot: TelegramBot;
+  private rateLimiter: RateLimiter;
 
   public constructor(
     protected logger: ILogger,
@@ -12,6 +14,14 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
     printChatInfo: boolean = false,
   ) {
     this.bot = new TelegramBot(options.apiToken, { polling: false });
+
+    // Initialize rate limiter with options or defaults
+    const rateLimitOptions: RateLimiterOptions = {
+      delay: options.rateLimit?.delay ?? 200,
+      maxQueueSize: options.rateLimit?.maxQueueSize ?? 10,
+      logInterval: options.rateLimit?.logInterval ?? 5,
+    };
+    this.rateLimiter = new RateLimiter(logger, rateLimitOptions);
 
     if (printChatInfo) {
       this.bot.on("message", (msg) => {
@@ -112,52 +122,68 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
   }
 
   protected async reply(msg: Message, message: string): Promise<void> {
-    await this.bot.sendMessage(msg.chat.id, message, {
-      parse_mode: "MarkdownV2",
-      reply_to_message_id: msg.message_id,
-    });
+    await this.rateLimiter.execute(() =>
+      this.bot.sendMessage(msg.chat.id, message, {
+        parse_mode: "MarkdownV2",
+        reply_to_message_id: msg.message_id,
+      })
+    );
   }
 
   protected async delete(msgId: number, chatId: number): Promise<void> {
-    await this.bot.deleteMessage(chatId, msgId);
+    await this.rateLimiter.execute(() =>
+      this.bot.deleteMessage(chatId, msgId)
+    );
   }
 
   protected async sendOrEdit(chatId: number, text: string, msgId?: number, keyboard?: BotKeyboardButton[][]): Promise<void> {
     const replyMarkup = keyboard ? { inline_keyboard: mapKeyboard(keyboard) } : undefined;
-    if (msgId)
-      await this.bot.editMessageText(text, {
-        chat_id: chatId,
-        message_id: msgId,
-        reply_markup: replyMarkup,
-        parse_mode: "MarkdownV2",
-      });
-    else
-      await this.bot.sendMessage(chatId, text, {
-        reply_markup: replyMarkup,
-        parse_mode: "MarkdownV2",
-      });
+    
+    if (msgId) {
+      await this.rateLimiter.execute(() =>
+        this.bot.editMessageText(text, {
+          chat_id: chatId,
+          message_id: msgId,
+          reply_markup: replyMarkup,
+          parse_mode: "MarkdownV2",
+        })
+      );
+    } else {
+      await this.rateLimiter.execute(() =>
+        this.bot.sendMessage(chatId, text, {
+          reply_markup: replyMarkup,
+          parse_mode: "MarkdownV2",
+        })
+      );
+    }
   }
 
   protected async sendMessage(chatId: number, message: string): Promise<void> {
-    await this.bot.sendMessage(
-      chatId,
-      message,
-      { parse_mode: "MarkdownV2" },
+    await this.rateLimiter.execute(() =>
+      this.bot.sendMessage(
+        chatId,
+        message,
+        { parse_mode: "MarkdownV2" },
+      )
     );
   }
 
   protected async sendPhoto(chatId: number, path: string): Promise<void> {
-    await this.bot.sendPhoto(
-      chatId,
-      path,
+    await this.rateLimiter.execute(() =>
+      this.bot.sendPhoto(
+        chatId,
+        path,
+      )
     );
   }
 
   protected async sendFile(chatId: number, data: string | Stream | Buffer, fileName: string = "file.txt", mimeType: string = "text/plain"): Promise<void> {
-    await this.bot.sendDocument(chatId, data, {}, {
-      filename: fileName,
-      contentType: mimeType,
-    });
+    await this.rateLimiter.execute(() =>
+      this.bot.sendDocument(chatId, data, {}, {
+        filename: fileName,
+        contentType: mimeType,
+      })
+    );
   }
 
   protected createBKBtn(op: string, text: string, data?: any): BotKeyboardButton {
