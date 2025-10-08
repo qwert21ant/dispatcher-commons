@@ -17,7 +17,7 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
 
     // Initialize rate limiter with options or defaults
     const rateLimitOptions: RateLimiterOptions = {
-      delay: options.rateLimit?.delay ?? 200,
+      delay: options.rateLimit?.delay ?? 300,
       maxQueueSize: options.rateLimit?.maxQueueSize ?? 10,
       logInterval: options.rateLimit?.logInterval ?? 5,
     };
