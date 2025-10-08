@@ -83,6 +83,11 @@ export class RateLimiter {
         const result = await request.execute();
         request.resolve(result);
       } catch (error) {
+        if (error?.code === "ETELEGRAM" && error?.response?.statusCode === 429 && error?.response?.parameters?.retry_after) {
+          const retryAfter = error.response.parameters.retry_after + 100; // Adding a small buffer
+          this.logger.warning(`Rate limit exceeded. Retrying after ${retryAfter} ms`);
+          await sleep(retryAfter);
+        }
         request.reject(error);
       }
     }
