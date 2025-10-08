@@ -9,11 +9,19 @@ export class TelegramBasicBot<Options extends CommonTelegramBotOptions> {
 
   public constructor(
     protected logger: ILogger,
-    protected rateLimiter: RateLimiter,
+    protected rateLimiter: RateLimiter | null,
     protected options: Options,
     printChatInfo: boolean = false,
   ) {
     this.bot = new TelegramBot(options.apiToken, { polling: false });
+
+    if (!this.rateLimiter) {
+      this.rateLimiter = new RateLimiter(this.logger, {
+        delay: 600,
+        maxQueueSize: 20,
+        logInterval: 5,
+      });
+    }
 
     if (printChatInfo) {
       this.bot.on("message", (msg) => {

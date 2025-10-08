@@ -14,6 +14,7 @@ interface QueuedRequest<T> {
   execute: () => Promise<T>;
   resolve: (value: T) => void;
   reject: (error: any) => void;
+  retryOnRateLimit: boolean;
 }
 
 export class RateLimiter {
@@ -27,12 +28,13 @@ export class RateLimiter {
     private options: RateLimiterOptions,
   ) {}
 
-  public async execute<T>(operation: () => Promise<T>): Promise<T> {
+  public async execute<T>(operation: () => Promise<T>, retryOnRateLimit: boolean = true): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const queuedRequest: QueuedRequest<T> = {
         execute: operation,
         resolve,
         reject,
+        retryOnRateLimit,
       };
 
       this.queue.push(queuedRequest);
@@ -83,10 +85,14 @@ export class RateLimiter {
         const result = await request.execute();
         request.resolve(result);
       } catch (error) {
-        if (error?.code === "ETELEGRAM" && error?.response?.statusCode === 429 && error?.response?.parameters?.retry_after) {
-          const retryAfter = error.response.parameters.retry_after + 100; // Adding a small buffer
+        if (error?.code === "ETELEGRAM" && error?.response?.statusCode === 429 && error?.response?.body?.parameters?.retry_after) {
+          const retryAfter = error.response.body.parameters.retry_after * 1000 + 1000;
           this.logger.warning(`Rate limit exceeded. Retrying after ${retryAfter} ms`);
           await sleep(retryAfter);
+          if (request.retryOnRateLimit) {
+            this.queue.unshift(request); // Re-add the request to the front of the queue
+            continue; // Skip the reject call below
+          }
         }
         request.reject(error);
       }

@@ -9,8 +9,8 @@ export class TelegramLogBot extends TelegramBasicBot<TelegramLogBotOptions> {
 
   public constructor(
     logger: ILogger,
+    rateLimiter: RateLimiter | null,
     options: TelegramLogBotOptions,
-    rateLimiter: RateLimiter,
     printChatInfo: boolean = false
   ) {
     super(logger, rateLimiter, options, printChatInfo);
